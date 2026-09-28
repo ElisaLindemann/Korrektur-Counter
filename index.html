@@ -6,8 +6,10 @@
   <title>Korrektur-Counter</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <main class="container">
+
     <header class="topbar">
       <div>
         <p class="eyebrow">Korrektur-Counter</p>
@@ -15,24 +17,36 @@
       </div>
     </header>
 
+    <!-- SCHÜLERANSICHT -->
     <section id="studentView">
       <div id="studentContent"></div>
     </section>
 
+    <!-- LEHRKRAFTANSICHT -->
     <section id="adminView" class="hidden">
+
       <div class="admin-header">
         <div>
           <p class="eyebrow">Lehrkraft-Modus</p>
           <h2>Korrekturen verwalten</h2>
         </div>
-        <button id="logoutButton" class="secondary">Abmelden</button>
+
+        <button id="logoutButton" class="secondary hidden">
+          Abmelden
+        </button>
       </div>
 
+      <!-- LOGIN -->
       <div id="loginBox" class="card">
+
         <h3>Anmelden</h3>
-        <p class="muted">Nur die Lehrkraft kann Änderungen vornehmen.</p>
+
+        <p class="muted">
+          Nur die Lehrkraft kann Änderungen vornehmen.
+        </p>
 
         <form id="loginForm">
+
           <label>
             E-Mail
             <input id="email" type="email" required>
@@ -43,54 +57,86 @@
             <input id="password" type="password" required>
           </label>
 
-          <button class="primary" type="submit">Anmelden</button>
+          <button class="primary" type="submit">
+            Anmelden
+          </button>
+
           <p id="loginMessage" class="message"></p>
+
         </form>
+
       </div>
 
+      <!-- VERWALTUNG -->
       <div id="adminContent" class="hidden">
+
         <div class="card">
+
           <h3>Neue Korrektur</h3>
 
           <form id="addForm" class="form-grid">
+
             <label>
               Bezeichnung
-              <input id="name" required placeholder="z. B. Klassenarbeit Deutsch">
+              <input
+                id="name"
+                required
+                placeholder="z. B. Klassenarbeit Deutsch"
+              >
             </label>
 
             <label>
               Klasse
-              <input id="klasse" required placeholder="z. B. 10c">
+              <input
+                id="klasse"
+                required
+                placeholder="z. B. 10c"
+              >
             </label>
 
             <label>
               Anzahl Arbeiten
-              <input id="gesamt" type="number" min="1" required>
+              <input
+                id="gesamt"
+                type="number"
+                min="1"
+                required
+              >
             </label>
 
-            <button class="primary" type="submit">Hinzufügen</button>
+            <button class="primary" type="submit">
+              Hinzufügen
+            </button>
+
           </form>
 
           <p id="adminMessage" class="message"></p>
+
         </div>
 
         <div class="card">
+
           <div class="section-title">
             <h3>Reihenfolge</h3>
             <span class="muted">Oben = als Nächstes</span>
           </div>
 
           <div id="adminList"></div>
+
         </div>
+
       </div>
+
     </section>
 
     <footer>
       Der Counter ist eine Orientierung und keine verbindliche Rückgabefrist.
     </footer>
+
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
+
 </body>
 </html>
