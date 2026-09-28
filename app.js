@@ -6,7 +6,6 @@ const db = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 const studentView = document.getElementById("studentView");
 const adminView = document.getElementById("adminView");
-const teacherButton = document.getElementById("teacherButton");
 const logoutButton = document.getElementById("logoutButton");
 const loginBox = document.getElementById("loginBox");
 const adminContent = document.getElementById("adminContent");
@@ -141,10 +140,6 @@ async function updateMode() {
   }
 }
 
-teacherButton.addEventListener("click", () => {
-  location.hash = "#admin";
-  updateMode();
-});
 
 logoutButton.addEventListener("click", async () => {
   await db.auth.signOut();
