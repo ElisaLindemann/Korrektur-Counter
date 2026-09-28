@@ -118,14 +118,34 @@ function renderStudent() {
 }
 
 async function updateMode() {
+  async function updateMode() {
   if (location.hash !== "#admin") {
+    adminView.setAttribute("hidden", "");
+    studentView.removeAttribute("hidden");
+
     adminView.classList.add("hidden");
     studentView.classList.remove("hidden");
     return;
   }
 
+  studentView.setAttribute("hidden", "");
+  adminView.removeAttribute("hidden");
+
   studentView.classList.add("hidden");
   adminView.classList.remove("hidden");
+
+  const { data } = await db.auth.getSession();
+
+  if (data.session) {
+    loginBox.classList.add("hidden");
+    adminContent.classList.remove("hidden");
+    logoutButton.classList.remove("hidden");
+  } else {
+    loginBox.classList.remove("hidden");
+    adminContent.classList.add("hidden");
+    logoutButton.classList.add("hidden");
+  }
+}
 
   const { data } = await db.auth.getSession();
 
