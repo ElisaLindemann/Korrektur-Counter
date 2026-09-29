@@ -22,6 +22,16 @@ async function load() {
   renderAdmin();
 }
 
+function formatTime(iso) {
+  if (!iso) return "–";
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  const days = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(d).setHours(0, 0, 0, 0)) / 86400000);
+  if (days === 0) return `heute, ${time} Uhr`;
+  if (days === 1) return `gestern, ${time} Uhr`;
+  return `${d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}., ${time} Uhr`;
+}
+
 /* ---------- Schülerseite ---------- */
 function renderStudent() {
   const el = $("studentContent");
@@ -30,18 +40,17 @@ function renderStudent() {
     el.innerHTML = `<div class="card empty">Zurzeit liegen keine Korrekturen an. 🎉</div>`;
     return;
   }
-  const total = corrections.reduce((s, i) => s + i.gesamt, 0);
-  const done = corrections.reduce((s, i) => s + i.korrigiert, 0);
-  const open = corrections.filter((i) => i.korrigiert < i.gesamt).length;
-  const overall = total ? Math.round((done / total) * 100) : 0;
+  const fertig = corrections.filter((i) => i.korrigiert >= i.gesamt).length;
+  const overall = Math.round(corrections.reduce((sum, i) => sum + pct(i), 0) / corrections.length);
   const current = corrections.find((i) => i.korrigiert < i.gesamt);
+  const latest = corrections.map((i) => i.aktualisiert).filter(Boolean).sort().pop();
 
   el.innerHTML = `
     <section class="hero">
       <p class="eyebrow">Gesamtfortschritt</p>
-      <div class="big">${done} <span>von ${total} Arbeiten korrigiert</span></div>
+      <div class="big">${fertig} <span>von ${corrections.length} Stapeln fertig</span></div>
       <div class="bar"><div style="width:${overall}%"></div></div>
-      <p class="muted">${open === 0 ? "Alles korrigiert!" : `${open} ${open === 1 ? "Stapel" : "Stapel"} noch offen`}</p>
+      <p class="muted">${overall} % insgesamt · Zuletzt aktualisiert: ${formatTime(latest)}</p>
     </section>
     <div class="grid">
       ${corrections.map((i) => {
@@ -54,7 +63,8 @@ function renderStudent() {
           <h3>${esc(i.name)}</h3>
           <p class="muted">Klasse ${esc(i.klasse)}</p>
           <div class="bar"><div style="width:${pct(i)}%"></div></div>
-          <p class="count"><strong>${i.korrigiert}</strong> von ${i.gesamt} · ${pct(i)} %</p>
+          <p class="count"><strong>${i.korrigiert}</strong> von ${i.gesamt} ${i.modus === "aufgaben" ? "Aufgaben" : "Arbeiten"} · ${pct(i)} %</p>
+          <p class="mode">${i.modus === "aufgaben" ? "Wird aufgabenweise korrigiert" : "Wird Arbeit für Arbeit korrigiert"}</p>
         </article>`;
       }).join("")}
     </div>`;
@@ -84,6 +94,11 @@ function setupAdmin() {
     await load();
   });
 
+  document.querySelectorAll('input[name="modus"]').forEach((r) =>
+    r.addEventListener("change", () => {
+      $("gesamtLabel").textContent = r.value === "aufgaben" ? "Anzahl Aufgaben" : "Anzahl Arbeiten";
+    }));
+
   $("logoutButton").addEventListener("click", async () => {
     await db.auth.signOut();
     updateAdminVisibility();
@@ -96,6 +111,7 @@ function setupAdmin() {
       name: $("name").value.trim(),
       klasse: $("klasse").value.trim(),
       gesamt: Number($("gesamt").value),
+      modus: document.querySelector('input[name="modus"]:checked').value,
       korrigiert: 0,
       position: nextPosition,
     });
@@ -140,7 +156,7 @@ function renderAdmin() {
     <div class="admin-row">
       <div class="admin-info">
         <strong>${n + 1}. ${esc(i.name)}</strong>
-        <span class="muted">Klasse ${esc(i.klasse)} · ${i.korrigiert}/${i.gesamt}</span>
+        <span class="muted">Klasse ${esc(i.klasse)} · ${i.korrigiert}/${i.gesamt} ${i.modus === "aufgaben" ? "Aufgaben" : "Arbeiten"}</span>
         <div class="bar small"><div style="width:${pct(i)}%"></div></div>
       </div>
       <div class="admin-actions">
