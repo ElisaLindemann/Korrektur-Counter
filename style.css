@@ -64,3 +64,10 @@ button:disabled { opacity: .35; cursor: default; }
 .admin-row:last-child { border-bottom: 0; }
 .admin-info { flex: 1 1 220px; display: flex; flex-direction: column; }
 .admin-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+footer { margin-top: 28px; text-align: center; font-size: .85rem; color: var(--muted); }
+
+.mode { margin: 4px 0 0; font-size: .8rem; color: var(--muted); }
+.modus { display: flex; gap: 16px; align-items: center; grid-column: 1 / -1; }
+.radio { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 500; }
+.radio input { width: auto; margin: 0; }
