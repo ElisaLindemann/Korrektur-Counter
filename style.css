@@ -1,97 +1,66 @@
-<!doctype html>
-<html lang="de">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Korrektur-Counter</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <main class="container">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Korrektur-Counter</p>
-        <h1>Wann ist meine Arbeit dran?</h1>
-      </div>
-      <button id="teacherButton" class="secondary">Lehrkraft</button>
-    </header>
+:root {
+  --bg: #f4f6fb; --card: #ffffff; --text: #1f2a44; --muted: #6b7690;
+  --accent: #4f6bed; --accent2: #7c5cf0; --ok: #22a06b; --line: #e3e8f2;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #12162a; --card: #1b213a; --text: #eef1fb; --muted: #9aa5c4; --line: #2b3354; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5; }
+.container { max-width: 960px; margin: 0 auto; padding: 32px 18px 60px; }
+.hidden { display: none !important; }
+h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 4px 0 8px; }
+h2, h3 { margin: 0 0 8px; }
+.eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: .75rem; font-weight: 700; color: var(--accent); margin: 0; }
+.muted { color: var(--muted); }
+.topbar { margin-bottom: 24px; }
 
-    <section id="studentView">
-      <div id="studentContent"></div>
-    </section>
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+  padding: 20px; margin-bottom: 18px; box-shadow: 0 4px 18px rgba(30, 40, 90, .06); }
+.narrow { max-width: 420px; margin: 0 auto; }
+.empty { text-align: center; padding: 40px 20px; color: var(--muted); }
 
-    <section id="adminView" class="hidden">
-      <div class="admin-header">
-        <div>
-          <p class="eyebrow">Lehrkraft-Modus</p>
-          <h2>Korrekturen verwalten</h2>
-        </div>
-        <button id="logoutButton" class="secondary">Abmelden</button>
-      </div>
+.hero { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+  border-radius: 22px; padding: 26px; margin-bottom: 22px; box-shadow: 0 10px 30px rgba(79, 107, 237, .3); }
+.hero .eyebrow, .hero .muted { color: rgba(255, 255, 255, .85); }
+.hero .big { font-size: 2.6rem; font-weight: 800; }
+.hero .big span { font-size: 1rem; font-weight: 500; opacity: .9; }
+.hero .bar { background: rgba(255, 255, 255, .25); }
+.hero .bar div { background: #fff; }
 
-      <div id="loginBox" class="card">
-        <h3>Anmelden</h3>
-        <p class="muted">Nur die Lehrkraft kann Änderungen vornehmen.</p>
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.stack { margin: 0; position: relative; }
+.stack h3 { font-size: 1.1rem; }
+.stack.current { border: 2px solid var(--accent); }
+.stack.finished { opacity: .7; }
+.stack.finished .bar div { background: var(--ok); }
+.tag { display: inline-block; font-size: .72rem; font-weight: 700; padding: 3px 10px; border-radius: 99px;
+  background: var(--bg); color: var(--muted); margin-bottom: 8px; }
+.current .tag { background: var(--accent); color: #fff; }
+.finished .tag { background: var(--ok); color: #fff; }
+.count { margin: 8px 0 0; }
 
-        <form id="loginForm">
-          <label>
-            E-Mail
-            <input id="email" type="email" required>
-          </label>
+.bar { height: 12px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 12px 0 4px; }
+.bar div { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 99px; transition: width .5s ease; }
+.bar.small { height: 8px; }
 
-          <label>
-            Passwort
-            <input id="password" type="password" required>
-          </label>
+label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: 12px; }
+input { display: block; width: 100%; margin-top: 4px; padding: 10px 12px; font-size: 1rem;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end; }
+.form-grid label { margin: 0; }
 
-          <button class="primary" type="submit">Anmelden</button>
-          <p id="loginMessage" class="message"></p>
-        </form>
-      </div>
+button { font: inherit; font-weight: 600; border: 0; border-radius: 10px; padding: 10px 16px; cursor: pointer; }
+button:disabled { opacity: .35; cursor: default; }
+.primary { background: var(--accent); color: #fff; }
+.secondary { background: var(--bg); color: var(--text); border: 1px solid var(--line); }
+.danger { color: #d33; }
+.small { padding: 8px 12px; }
 
-      <div id="adminContent" class="hidden">
-        <div class="card">
-          <h3>Neue Korrektur</h3>
-
-          <form id="addForm" class="form-grid">
-            <label>
-              Bezeichnung
-              <input id="name" required placeholder="z. B. Klassenarbeit Deutsch">
-            </label>
-
-            <label>
-              Klasse
-              <input id="klasse" required placeholder="z. B. 10c">
-            </label>
-
-            <label>
-              Anzahl Arbeiten
-              <input id="gesamt" type="number" min="1" required>
-            </label>
-
-            <button class="primary" type="submit">Hinzufügen</button>
-          </form>
-
-          <p id="adminMessage" class="message"></p>
-        </div>
-
-        <div class="card">
-          <div class="section-title">
-            <h3>Reihenfolge</h3>
-            <span class="muted">Oben = als Nächstes</span>
-          </div>
-
-          <div id="adminList"></div>
-        </div>
-      </div>
-    </section>
-
-    <footer>
-      Der Counter ist eine Orientierung und keine verbindliche Rückgabefrist.
-    </footer>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+.admin-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center;
+  padding: 14px 0; border-bottom: 1px solid var(--line); }
+.admin-row:last-child { border-bottom: 0; }
+.admin-info { flex: 1 1 220px; display: flex; flex-direction: column; }
+.admin-actions { display: flex; flex-wrap: wrap; gap: 6px; }
