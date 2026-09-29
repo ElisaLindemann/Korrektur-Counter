@@ -1,521 +1,164 @@
 const SUPABASE_URL = "https://sftpdnvyehwlcjojyurb.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TZ533bZFVI2Ak3eGq7GKfA_EF7Pg_l3";
-
-const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const SUPABASE_KEY = "sb_publishable_TZ533bZFVI2Ak3eGq7GKfA_EF7Pg_l3";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let corrections = [];
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
+const pct = (i) => (i.gesamt ? Math.min(100, Math.round((i.korrigiert / i.gesamt) * 100)) : 0);
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-async function loadCorrections() {
-  const { data, error } = await db
-    .from("korrekturen")
-    .select("*")
-    .order("position", { ascending: true })
-    .order("id", { ascending: true });
-
+async function load() {
+  const { data, error } = await db.from("korrekturen").select("*")
+    .order("position", { ascending: true }).order("id", { ascending: true });
   if (error) {
     console.error(error);
-
-    const target = document.getElementById("studentContent");
-
-    if (target) {
-      target.innerHTML = `
-        <div class="card">
-          <h2>Daten konnten nicht geladen werden.</h2>
-          <p class="muted">${escapeHtml(error.message)}</p>
-        </div>
-      `;
-    }
-
+    const el = $("studentContent");
+    if (el) el.innerHTML = `<div class="card empty">Daten konnten nicht geladen werden.</div>`;
     return;
   }
-
   corrections = data || [];
-
   renderStudent();
   renderAdmin();
 }
 
-/* =========================
-   SCHÜLERSEITE
-   ========================= */
-
+/* ---------- Schülerseite ---------- */
 function renderStudent() {
-  const studentContent = document.getElementById("studentContent");
-
-  if (!studentContent) return;
-
+  const el = $("studentContent");
+  if (!el) return;
   if (!corrections.length) {
-    studentContent.innerHTML = `
-      <div class="card empty">
-        <h2>Keine Korrekturen eingetragen</h2>
-        <p>Momentan sind keine Korrekturen hinterlegt.</p>
-      </div>
-    `;
+    el.innerHTML = `<div class="card empty">Zurzeit liegen keine Korrekturen an. 🎉</div>`;
     return;
   }
+  const total = corrections.reduce((s, i) => s + i.gesamt, 0);
+  const done = corrections.reduce((s, i) => s + i.korrigiert, 0);
+  const open = corrections.filter((i) => i.korrigiert < i.gesamt).length;
+  const overall = total ? Math.round((done / total) * 100) : 0;
+  const current = corrections.find((i) => i.korrigiert < i.gesamt);
 
-  const current = corrections[0];
-
-  const progress = Math.min(
-    100,
-    Math.round((current.korrigiert / current.gesamt) * 100)
-  );
-
-  studentContent.innerHTML = `
-    <section class="current">
-      <p class="eyebrow">Aktuell an der Reihe</p>
-
-      <h2>${escapeHtml(current.name)}</h2>
-
-      <p>Klasse ${escapeHtml(current.klasse)}</p>
-
-      <div class="progress-wrap">
-
-        <div class="progress-meta">
-          <span>
-            ${current.korrigiert} von ${current.gesamt} korrigiert
-          </span>
-
-          <span>${progress}%</span>
-        </div>
-
-        <div class="progress">
-          <div style="width:${progress}%"></div>
-        </div>
-
-      </div>
+  el.innerHTML = `
+    <section class="hero">
+      <p class="eyebrow">Gesamtfortschritt</p>
+      <div class="big">${done} <span>von ${total} Arbeiten korrigiert</span></div>
+      <div class="bar"><div style="width:${overall}%"></div></div>
+      <p class="muted">${open === 0 ? "Alles korrigiert!" : `${open} ${open === 1 ? "Stapel" : "Stapel"} noch offen`}</p>
     </section>
-
-    <div class="card">
-
-      <div class="section-title">
-        <h3>Korrektur-Reihenfolge</h3>
-      </div>
-
-      <ol class="order-list">
-
-        ${corrections.map((item, index) => {
-
-          const done = item.korrigiert >= item.gesamt;
-
-          return `
-            <li class="order-item ${index === 0 ? "current-item" : ""}">
-
-              <div class="number">
-                ${index + 1}
-              </div>
-
-              <div>
-                <div class="item-title">
-                  ${escapeHtml(item.name)}
-                </div>
-
-                <div class="item-sub">
-                  Klasse ${escapeHtml(item.klasse)}
-                </div>
-              </div>
-
-              <span class="badge ${done ? "done" : ""}">
-                ${done
-                  ? "fertig"
-                  : `${item.korrigiert}/${item.gesamt}`}
-              </span>
-
-            </li>
-          `;
-
-        }).join("")}
-
-      </ol>
-
-    </div>
-  `;
+    <div class="grid">
+      ${corrections.map((i) => {
+        const finished = i.korrigiert >= i.gesamt;
+        const isCur = current && current.id === i.id;
+        const label = finished ? "Fertig ✓" : isCur ? "Gerade in Arbeit" : "Wartet";
+        return `
+        <article class="card stack ${finished ? "finished" : ""} ${isCur ? "current" : ""}">
+          <span class="tag">${label}</span>
+          <h3>${esc(i.name)}</h3>
+          <p class="muted">Klasse ${esc(i.klasse)}</p>
+          <div class="bar"><div style="width:${pct(i)}%"></div></div>
+          <p class="count"><strong>${i.korrigiert}</strong> von ${i.gesamt} · ${pct(i)} %</p>
+        </article>`;
+      }).join("")}
+    </div>`;
 }
 
-
-/* =========================
-   VERWALTUNG
-   ========================= */
+/* ---------- Verwaltung ---------- */
+async function updateAdminVisibility() {
+  if (!$("loginBox")) return;
+  const { data } = await db.auth.getSession();
+  const loggedIn = !!data.session;
+  $("loginBox").classList.toggle("hidden", loggedIn);
+  $("adminContent").classList.toggle("hidden", !loggedIn);
+}
 
 function setupAdmin() {
+  if (!$("loginForm")) return;
 
-  const loginForm = document.getElementById("loginForm");
-  const logoutButton = document.getElementById("logoutButton");
-  const addForm = document.getElementById("addForm");
-
-  if (!loginForm || !addForm) return;
-
-  loginForm.addEventListener("submit", async (event) => {
-
-    event.preventDefault();
-
-    const loginMessage =
-      document.getElementById("loginMessage");
-
-    loginMessage.textContent = "Anmeldung läuft …";
-
-    const email =
-      document.getElementById("email").value.trim();
-
-    const password =
-      document.getElementById("password").value;
-
-    const { error } =
-      await db.auth.signInWithPassword({
-        email,
-        password
-      });
-
-    if (error) {
-      loginMessage.textContent =
-        "Anmeldung fehlgeschlagen.";
-      return;
-    }
-
-    loginMessage.textContent = "";
-
-    updateAdminVisibility();
-    await loadCorrections();
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("loginMessage").textContent = "Anmeldung läuft …";
+    const { error } = await db.auth.signInWithPassword({
+      email: $("email").value.trim(),
+      password: $("password").value,
+    });
+    $("loginMessage").textContent = error ? "Anmeldung fehlgeschlagen." : "";
+    await updateAdminVisibility();
+    await load();
   });
 
-
-  logoutButton.addEventListener("click", async () => {
-
+  $("logoutButton").addEventListener("click", async () => {
     await db.auth.signOut();
-
     updateAdminVisibility();
-
   });
 
-
-  addForm.addEventListener("submit", async (event) => {
-
-    event.preventDefault();
-
-    const name =
-      document.getElementById("name").value.trim();
-
-    const klasse =
-      document.getElementById("klasse").value.trim();
-
-    const gesamt =
-      Number(document.getElementById("gesamt").value);
-
-    const nextPosition = corrections.length
-      ? Math.max(
-          ...corrections.map(item => item.position)
-        ) + 1
-      : 1;
-
-    const { error } = await db
-      .from("korrekturen")
-      .insert({
-        name,
-        klasse,
-        gesamt,
-        korrigiert: 0,
-        position: nextPosition
-      });
-
-    const adminMessage =
-      document.getElementById("adminMessage");
-
-    if (error) {
-
-      adminMessage.textContent =
-        "Fehler beim Speichern.";
-
-      console.error(error);
-
-      return;
-    }
-
-    addForm.reset();
-
-    adminMessage.textContent =
-      "Korrektur wurde hinzugefügt.";
-
-    await loadCorrections();
+  $("addForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const nextPosition = corrections.length ? Math.max(...corrections.map((i) => i.position)) + 1 : 1;
+    const { error } = await db.from("korrekturen").insert({
+      name: $("name").value.trim(),
+      klasse: $("klasse").value.trim(),
+      gesamt: Number($("gesamt").value),
+      korrigiert: 0,
+      position: nextPosition,
+    });
+    $("adminMessage").textContent = error ? "Fehler beim Speichern." : "Hinzugefügt.";
+    if (!error) $("addForm").reset();
+    await load();
   });
-
 }
-
-
-async function updateAdminVisibility() {
-
-  const loginBox =
-    document.getElementById("loginBox");
-
-  const adminContent =
-    document.getElementById("adminContent");
-
-  const logoutButton =
-    document.getElementById("logoutButton");
-
-  if (!loginBox || !adminContent) return;
-
-  const { data } =
-    await db.auth.getSession();
-
-  if (data.session) {
-
-    loginBox.classList.add("hidden");
-
-    adminContent.classList.remove("hidden");
-
-    if (logoutButton) {
-      logoutButton.classList.remove("hidden");
-    }
-
-  } else {
-
-    loginBox.classList.remove("hidden");
-
-    adminContent.classList.add("hidden");
-
-    if (logoutButton) {
-      logoutButton.classList.add("hidden");
-    }
-
-  }
-
-}
-
 
 async function changeProgress(id, amount) {
-
-  const item =
-    corrections.find(x => x.id === id);
-
+  const item = corrections.find((x) => x.id === id);
   if (!item) return;
-
-  const neuerWert = Math.max(
-    0,
-    Math.min(
-      item.gesamt,
-      item.korrigiert + amount
-    )
-  );
-
-  const { error } = await db
-    .from("korrekturen")
-    .update({
-      korrigiert: neuerWert
-    })
-    .eq("id", id);
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  await loadCorrections();
+  const neu = Math.max(0, Math.min(item.gesamt, item.korrigiert + amount));
+  await db.from("korrekturen").update({ korrigiert: neu }).eq("id", id);
+  await load();
 }
-
-
-async function resetProgress(id) {
-
-  const item =
-    corrections.find(x => x.id === id);
-
-  if (!item) return;
-
-  const { error } = await db
-    .from("korrekturen")
-    .update({
-      korrigiert: 0
-    })
-    .eq("id", id);
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  await loadCorrections();
-}
-
 
 async function deleteCorrection(id) {
-
-  if (!confirm("Diesen Eintrag wirklich löschen?")) {
-    return;
-  }
-
-  const { error } = await db
-    .from("korrekturen")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  await loadCorrections();
+  if (!confirm("Diesen Stapel wirklich löschen?")) return;
+  await db.from("korrekturen").delete().eq("id", id);
+  await load();
 }
 
-
-async function moveCorrection(id, direction) {
-
-  const index =
-    corrections.findIndex(x => x.id === id);
-
-  const otherIndex =
-    index + direction;
-
-  if (
-    index < 0 ||
-    otherIndex < 0 ||
-    otherIndex >= corrections.length
-  ) {
-    return;
-  }
-
-  const current =
-    corrections[index];
-
-  const other =
-    corrections[otherIndex];
-
-  await db
-    .from("korrekturen")
-    .update({
-      position: other.position
-    })
-    .eq("id", current.id);
-
-  await db
-    .from("korrekturen")
-    .update({
-      position: current.position
-    })
-    .eq("id", other.id);
-
-  await loadCorrections();
+async function moveCorrection(id, dir) {
+  const i = corrections.findIndex((x) => x.id === id);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= corrections.length) return;
+  const a = corrections[i], b = corrections[j];
+  await db.from("korrekturen").update({ position: b.position }).eq("id", a.id);
+  await db.from("korrekturen").update({ position: a.position }).eq("id", b.id);
+  await load();
 }
-
 
 function renderAdmin() {
-
-  const adminList =
-    document.getElementById("adminList");
-
-  if (!adminList) return;
-
+  const el = $("adminList");
+  if (!el) return;
   if (!corrections.length) {
-
-    adminList.innerHTML =
-      `<div class="empty">
-        Noch keine Korrekturen.
-      </div>`;
-
+    el.innerHTML = `<p class="muted">Noch keine Stapel angelegt.</p>`;
     return;
   }
-
-  adminList.innerHTML =
-    corrections.map((item, index) => `
-
-      <div class="admin-row">
-
-        <div>
-
-          <strong>
-            ${index + 1}. ${escapeHtml(item.name)}
-          </strong>
-
-          <div class="item-sub">
-            Klasse ${escapeHtml(item.klasse)}
-            · ${item.korrigiert}/${item.gesamt}
-          </div>
-
-        </div>
-
-        <div class="admin-actions">
-
-          <button
-            class="secondary small"
-            onclick="moveCorrection(${item.id}, -1)"
-            ${index === 0 ? "disabled" : ""}
-          >
-            ↑
-          </button>
-
-          <button
-            class="secondary small"
-            onclick="moveCorrection(${item.id}, 1)"
-            ${index === corrections.length - 1 ? "disabled" : ""}
-          >
-            ↓
-          </button>
-
-          <button
-            class="secondary small"
-            onclick="changeProgress(${item.id}, -1)"
-          >
-            −1
-          </button>
-
-          <button
-            class="primary small"
-            onclick="changeProgress(${item.id}, 1)"
-          >
-            +1
-          </button>
-
-          <button
-            class="secondary small"
-            onclick="resetProgress(${item.id})"
-          >
-            0
-          </button>
-
-          <button
-            class="secondary small danger"
-            onclick="deleteCorrection(${item.id})"
-          >
-            Löschen
-          </button>
-
-        </div>
-
+  el.innerHTML = corrections.map((i, n) => `
+    <div class="admin-row">
+      <div class="admin-info">
+        <strong>${n + 1}. ${esc(i.name)}</strong>
+        <span class="muted">Klasse ${esc(i.klasse)} · ${i.korrigiert}/${i.gesamt}</span>
+        <div class="bar small"><div style="width:${pct(i)}%"></div></div>
       </div>
-
-    `).join("");
+      <div class="admin-actions">
+        <button class="secondary small" onclick="moveCorrection(${i.id}, -1)" ${n === 0 ? "disabled" : ""}>↑</button>
+        <button class="secondary small" onclick="moveCorrection(${i.id}, 1)" ${n === corrections.length - 1 ? "disabled" : ""}>↓</button>
+        <button class="secondary small" onclick="changeProgress(${i.id}, -1)">−1</button>
+        <button class="primary small" onclick="changeProgress(${i.id}, 1)">+1</button>
+        <button class="primary small" onclick="changeProgress(${i.id}, 5)">+5</button>
+        <button class="secondary small danger" onclick="deleteCorrection(${i.id})">Löschen</button>
+      </div>
+    </div>`).join("");
 }
 
-
-/* =========================
-   START
-   ========================= */
-
+/* ---------- Start ---------- */
 setupAdmin();
-loadCorrections();
 updateAdminVisibility();
-
-
-/* =========================
-   LIVE-AKTUALISIERUNG
-   ========================= */
+load();
 
 db.channel("korrektur-counter")
-  .on(
-    "postgres_changes",
-    {
-      event: "*",
-      schema: "public",
-      table: "korrekturen"
-    },
-    () => loadCorrections()
-  )
+  .on("postgres_changes", { event: "*", schema: "public", table: "korrekturen" }, () => load())
   .subscribe();
