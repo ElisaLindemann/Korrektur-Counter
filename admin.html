@@ -3,123 +3,52 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Korrektur-Counter – Verwaltung</title>
+  <meta name="robots" content="noindex, nofollow">
+  <title>Verwaltung</title>
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
   <main class="container">
-
     <header class="topbar">
-      <div>
-        <p class="eyebrow">Korrektur-Counter</p>
-        <h1>Verwaltung</h1>
-      </div>
+      <p class="eyebrow">Korrektur-Counter</p>
+      <h1>Verwaltung</h1>
     </header>
 
-    <section id="loginBox" class="card">
-      <h2>Lehrkraft-Anmeldung</h2>
-      <p class="muted">
-        Dieser Bereich ist nur für die Lehrkraft.
-      </p>
-
+    <section id="loginBox" class="card narrow">
+      <h2>Anmeldung</h2>
       <form id="loginForm">
-        <label>
-          E-Mail
-          <input id="email" type="email" required>
-        </label>
-
-        <label>
-          Passwort
-          <input id="password" type="password" required>
-        </label>
-
-        <button class="primary" type="submit">
-          Anmelden
-        </button>
-
-        <p id="loginMessage" class="message"></p>
+        <label>E-Mail <input id="email" type="email" required></label>
+        <label>Passwort <input id="password" type="password" required></label>
+        <button class="primary" type="submit">Anmelden</button>
+        <p id="loginMessage" class="muted"></p>
       </form>
     </section>
 
     <section id="adminContent" class="hidden">
-
-      <div class="admin-header">
-        <div>
-          <p class="eyebrow">Lehrkraft-Modus</p>
-          <h2>Korrekturen verwalten</h2>
-        </div>
-
-        <button id="logoutButton" class="secondary">
-          Abmelden
-        </button>
-      </div>
-
       <div class="card">
-        <h3>Neue Korrektur</h3>
-
+        <h3>Neuen Stapel anlegen</h3>
         <form id="addForm" class="form-grid">
-
-          <label>
-            Bezeichnung
-            <input
-              id="name"
-              required
-              placeholder="z. B. Klassenarbeit Deutsch"
-            >
-          </label>
-
-          <label>
-            Klasse
-            <input
-              id="klasse"
-              required
-              placeholder="z. B. 10c"
-            >
-          </label>
-
-          <label>
-            Anzahl Arbeiten
-            <input
-              id="gesamt"
-              type="number"
-              min="1"
-              required
-            >
-          </label>
-
-          <button class="primary" type="submit">
-            Hinzufügen
-          </button>
-
+          <label>Bezeichnung <input id="name" required placeholder="z. B. Klassenarbeit Deutsch"></label>
+          <label>Klasse <input id="klasse" required placeholder="z. B. 10c"></label>
+          <label><span id="gesamtLabel">Anzahl Arbeiten</span> <input id="gesamt" type="number" min="1" required></label>
+          <div class="modus">
+            <label class="radio"><input type="radio" name="modus" value="schueler" checked> Schülerweise</label>
+            <label class="radio"><input type="radio" name="modus" value="aufgaben"> Aufgabenweise</label>
+          </div>
+          <button class="primary" type="submit">Hinzufügen</button>
         </form>
-
-        <p id="adminMessage" class="message"></p>
+        <p id="adminMessage" class="muted"></p>
       </div>
 
       <div class="card">
-
-        <div class="section-title">
-          <h3>Reihenfolge</h3>
-          <span class="muted">
-            Oben = als Nächstes
-          </span>
-        </div>
-
+        <h3>Deine Stapel <span class="muted">(oben = als Nächstes)</span></h3>
         <div id="adminList"></div>
-
       </div>
 
+      <button id="logoutButton" class="secondary">Abmelden</button>
     </section>
-
-    <footer>
-      Verwaltungsbereich des Korrektur-Counters.
-    </footer>
-
   </main>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
-
 </body>
 </html>
